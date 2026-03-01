@@ -33,12 +33,13 @@ export const translations: Translations = {
     pdfGeneratedSuccess: "PDF généré avec succès !",
     downloadPDF: "Télécharger le PDF",
     noPDFYet: "Aucun PDF généré",
-    noPDFDescription: "Sélectionnez une leçon et cliquez sur \"Générer le PDF\"",
+    noPDFDescription: 'Sélectionnez une leçon et cliquez sur "Générer le PDF"',
     selectedLessonDetails: "Détails de la leçon sélectionnée",
     level: "Niveau",
     selectLevel: "Sélectionner un niveau",
     connectionError: "Erreur de connexion",
-    backendNotRunning: "Assurez-vous que le backend Flask fonctionne sur le port 5000",
+    backendNotRunning:
+      "Assurez-vous que le backend Flask fonctionne sur le port 5000",
     lessonsLoaded: "leçons chargées avec succès.",
     français: "Français",
     "langue arabe": "Langue arabe",
@@ -48,7 +49,8 @@ export const translations: Translations = {
     // Profile Page
     profileTitle: "Profil de l'enseignant",
     backToGenerator: "Retour au générateur",
-    profileDescription: "Mettez à jour vos informations d'enseignant ici. La Matière est déterminée automatiquement. Le nom est obligatoire, les autres champs sont optionnels. Les champs vides seront masqués.",
+    profileDescription:
+      "Mettez à jour vos informations d'enseignant ici. La Matière est déterminée automatiquement. Le nom est obligatoire, les autres champs sont optionnels. Les champs vides seront masqués.",
     saveProfile: "Enregistrer le profil",
     saving: "Enregistrement...",
     profileSaved: "Profil enregistré avec succès !",
@@ -70,7 +72,8 @@ export const translations: Translations = {
     clickToSelectFile: "Cliquez pour sélectionner un fichier",
     onlyPPTXAllowed: "Formats acceptés: .pptx uniquement",
     uploadAndGenerate: "Télécharger et générer le PDF",
-    uploadDescription: "Le fichier sera ajouté à la base de données pour les utilisateurs futurs.",
+    uploadDescription:
+      "Le fichier sera ajouté à la base de données pour les utilisateurs futurs.",
     uploading: "Téléchargement...",
     backToSelection: "Retour à la sélection",
     uploadedLessonDetails: "Détails du lesson téléversée",
@@ -95,7 +98,7 @@ export const translations: Translations = {
     welcome: "Bienvenue",
   },
   ar: {
-    appTitle: "تدرس أيه",
+    appTitle: "Tadris AI",
     appSubtitle: "إنشاء ملفات PDF جميلة للدروس",
     darkMode: "الوضع الداكن",
     lightMode: "الوضع الفاتح",
@@ -116,7 +119,7 @@ export const translations: Translations = {
     pdfGeneratedSuccess: "تم إنشاء PDF بنجاح!",
     downloadPDF: "تحميل PDF",
     noPDFYet: "لم يتم إنشاء PDF بعد",
-    noPDFDescription: "اختر درسًا وانقر على \"إنشاء PDF\"",
+    noPDFDescription: 'اختر درسًا وانقر على "إنشاء PDF"',
     selectedLessonDetails: "تفاصيل الدرس المحدد",
     level: "المستوى",
     selectLevel: "اختر المستوى",
@@ -129,7 +132,8 @@ export const translations: Translations = {
     // Profile Page
     profileTitle: "الملف الشخصي للأستاذ",
     backToGenerator: "العودة إلى المولد",
-    profileDescription: "قم بتحديث معلوماتك هنا. يتم تحديد المادة تلقائيًا. الاسم إلزامي، والحقول الأخرى اختيارية. سيتم إخفاء الحقول الفارغة.",
+    profileDescription:
+      "قم بتحديث معلوماتك هنا. يتم تحديد المادة تلقائيًا. الاسم إلزامي، والحقول الأخرى اختيارية. سيتم إخفاء الحقول الفارغة.",
     saveProfile: "حفظ المعلومات",
     saving: "جاري الحفظ...",
     profileSaved: "تم حفظ المعلومات بنجاح!",
@@ -151,7 +155,8 @@ export const translations: Translations = {
     clickToSelectFile: "انقر لتحديد ملف",
     onlyPPTXAllowed: "الصيغ المقبولة: pptx فقط",
     uploadAndGenerate: "تحميل وإنشاء PDF",
-    uploadDescription: "سيتم إضافة الملف إلى قاعدة البيانات للمستخدمين المستقبليين.",
+    uploadDescription:
+      "سيتم إضافة الملف إلى قاعدة البيانات للمستخدمين المستقبليين.",
     uploading: "جاري التحميل...",
     backToSelection: "العودة للاختيار",
     uploadedLessonDetails: "تفاصيل الدرس المحمل",
