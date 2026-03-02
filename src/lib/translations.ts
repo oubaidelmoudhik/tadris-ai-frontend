@@ -66,6 +66,8 @@ export const translations: Translations = {
     teacherInfo: "Informations de l'enseignant",
     teacherName: "Nom",
     establishment: "Établissement",
+    // Toggle
+    showMinistryLogo: "Afficher le logo du ministère",
     // Upload Feature
     uploadNewLesson: "Télécharger une nouvelle leçon",
     uploadPPTX: "Télécharger un fichier PPTX",
@@ -149,6 +151,8 @@ export const translations: Translations = {
     teacherInfo: "معلومات الأستاذ",
     teacherName: "الاسم",
     establishment: "المؤسسة",
+    // Toggle
+    showMinistryLogo: "عرض شعار الوزارة",
     // Upload Feature
     uploadNewLesson: "تحميل درس جديد",
     uploadPPTX: "تحميل ملف PPTX",

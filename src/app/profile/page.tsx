@@ -2,24 +2,10 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import { API_URL, TeacherInfo } from "../../lib/api";
+import { API_URL, TeacherInfo, TeacherInfoAPIResponse } from "../../lib/api";
 import { translations } from "../../lib/translations";
 import { useLanguage } from "../../context/LanguageContext";
 import { useAuth } from "../../context/AuthContext";
-
-// Define interface for the flat API response
-interface TeacherInfoData {
-  user: number;
-  ppr: string;
-  annee_scolaire: string;
-  nom: string;
-  etablissement: string;
-  niveau: string;
-  nom_ar: string;
-  etablissement_ar: string;
-  niveau_ar: string;
-  updated_at: string;
-}
 
 export default function ProfilePage() {
   const { language } = useLanguage();
@@ -46,6 +32,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState("");
+  const [showMinistryLogo, setShowMinistryLogo] = useState(true);
 
   const handleSharedChange = (fieldKey: "PPR" | "Year", value: string) => {
     setInfo((prev) => {
@@ -91,8 +78,9 @@ export default function ProfilePage() {
           if (!res.ok) throw new Error("Server error");
           return res.json();
         })
-        .then((data: TeacherInfoData) => {
+        .then((data: TeacherInfoAPIResponse) => {
           if (data) {
+            setShowMinistryLogo(data.show_ministry_logo ?? true);
             setInfo({
               fr: { 
                 Nom: data.nom || "", 
@@ -138,6 +126,7 @@ export default function ProfilePage() {
         المؤسسة: info.ar.المؤسسة,
         المستوى: info.ar.المستوى,
       },
+      show_ministry_logo: showMinistryLogo,
     };
     
     try {
@@ -305,6 +294,27 @@ export default function ProfilePage() {
                         </div>
                     </div>
                 </div>
+            </div>
+
+            {/* Settings Section */}
+            <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
+                    {language === "fr" ? "Paramètres" : "الإعدادات"}
+                </h3>
+                <label className="flex items-center justify-between cursor-pointer">
+                    <span className="text-gray-700 dark:text-gray-300 font-medium">
+                        {t("showMinistryLogo")}
+                    </span>
+                    <div className="relative">
+                        <input
+                            type="checkbox"
+                            checked={showMinistryLogo}
+                            onChange={(e) => setShowMinistryLogo(e.target.checked)}
+                            className="sr-only peer"
+                        />
+                        <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-500 peer-checked:bg-blue-600"></div>
+                    </div>
+                </label>
             </div>
 
             <div className="mt-8 flex justify-center">

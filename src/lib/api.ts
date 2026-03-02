@@ -29,6 +29,21 @@ export interface TeacherInfoData {
   [key: string]: string | number;
 }
 
+// TeacherInfoData from API includes show_ministry_logo
+export interface TeacherInfoAPIResponse {
+  user: number;
+  ppr: string;
+  annee_scolaire: string;
+  nom: string;
+  etablissement: string;
+  niveau: string;
+  nom_ar: string;
+  etablissement_ar: string;
+  niveau_ar: string;
+  show_ministry_logo: boolean;
+  updated_at: string;
+}
+
 export interface CsvData {
   [key: string]: string | number;
 }
