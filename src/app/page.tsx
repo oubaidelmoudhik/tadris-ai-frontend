@@ -1,6 +1,7 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
+import Cookies from 'js-cookie';
 import { API_URL, uploadLesson } from "../lib/api";
 import { extractPPTXText, createPPTXHandler, isValidPPTX, uploadLessonJson } from "../lib/pptx-extractor";
 import { translations } from "../lib/translations";
@@ -68,7 +69,10 @@ export default function HomePage() {
     if (!isAuthenticated) return;
     
     console.log("🔄 Fetching lessons from backend...");
-    fetch(`${API_URL}/lessons/`, { credentials: "include" })
+    fetch(`${API_URL}/lessons/`, { 
+      credentials: "include",
+      headers: getAuthHeaders(),
+    })
       .then((res) => {
         console.log("📡 Response status:", res.status);
         if (!res.ok) {
@@ -180,6 +184,10 @@ export default function HomePage() {
         { 
           method: "POST",
           credentials: "include",
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
         }
       );
       
@@ -208,7 +216,10 @@ export default function HomePage() {
 
   // Refresh lessons list
   const refreshLessons = () => {
-    fetch(`${API_URL}/lessons/`, { credentials: "include" })
+    fetch(`${API_URL}/lessons/`, { 
+      credentials: "include",
+      headers: getAuthHeaders(),
+    })
       .then((res) => res.json())
       .then((data) => {
         setLessons(data);
@@ -354,6 +365,10 @@ export default function HomePage() {
         { 
           method: "POST",
           credentials: "include",
+          headers: {
+            'Content-Type': 'application/json',
+            ...getAuthHeaders(),
+          },
         }
       );
       
@@ -388,6 +403,15 @@ export default function HomePage() {
   const activeLesson = uploadedLesson || selectedLesson;
 
   const isRTL = language === "ar";
+
+  // Helper to get auth headers
+  const getAuthHeaders = (): Record<string, string> => {
+    const token = Cookies.get('access_token');
+    if (token) {
+      return { 'Authorization': `Bearer ${token}` };
+    }
+    return {};
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
