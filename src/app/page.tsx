@@ -68,7 +68,7 @@ export default function HomePage() {
     if (!isAuthenticated) return;
     
     console.log("🔄 Fetching lessons from backend...");
-    fetch(`${API_URL}/lessons/`)
+    fetch(`${API_URL}/lessons/`, { credentials: "include" })
       .then((res) => {
         console.log("📡 Response status:", res.status);
         if (!res.ok) {
@@ -177,7 +177,10 @@ export default function HomePage() {
       
       const res = await fetch(
         `${API_URL}/lessons/${selectedLesson.id}/generate/`,
-        { method: "POST" }
+        { 
+          method: "POST",
+          credentials: "include",
+        }
       );
       
       setLoadingStep(t("generatingPDF"));
@@ -205,7 +208,7 @@ export default function HomePage() {
 
   // Refresh lessons list
   const refreshLessons = () => {
-    fetch(`${API_URL}/lessons/`)
+    fetch(`${API_URL}/lessons/`, { credentials: "include" })
       .then((res) => res.json())
       .then((data) => {
         setLessons(data);
@@ -348,7 +351,10 @@ export default function HomePage() {
       
       const res = await fetch(
         `${API_URL}/lessons/${uploadedLesson.id}/generate/`,
-        { method: "POST" }
+        { 
+          method: "POST",
+          credentials: "include",
+        }
       );
       
       setLoadingStep(t("generatingPDF"));
