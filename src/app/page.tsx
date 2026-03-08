@@ -2,7 +2,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { API_URL, uploadLesson } from "../lib/api";
-import { extractPPTXText, createPPTXHandler, isValidPPTX } from "../lib/pptx-extractor";
+import { extractPPTXText, createPPTXHandler, isValidPPTX, uploadLessonJson } from "../lib/pptx-extractor";
 import { translations } from "../lib/translations";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
@@ -230,19 +230,29 @@ export default function HomePage() {
 
   // Handle upload - save to database only (using client-side extraction)
   const handleUpload = async () => {
+    console.log('🚀 [UPLOAD-FLOW] === Upload Initiated ===');
+    console.log('🔍 [UPLOAD-FLOW] Selected file:', {
+      name: selectedFile?.name,
+      size: selectedFile?.size,
+      sizeMB: selectedFile ? (selectedFile.size / 1024 / 1024).toFixed(2) : 'N/A',
+    });
+
     if (!selectedFile) {
+      console.error('❌ [UPLOAD-FLOW] No file selected');
       setError("Please select a file first");
       return;
     }
 
     // Validate file type
     if (!isValidPPTX(selectedFile)) {
+      console.error('❌ [UPLOAD-FLOW] Invalid file type');
       setError("Please select a .pptx file");
       return;
     }
 
     // Check if user is authenticated
-    if (!isAuthenticated || !accessToken) {
+    if (!isAuthenticated) {
+      console.error('❌ [UPLOAD-FLOW] Not authenticated');
       setError("Please login to upload lessons");
       return;
     }
@@ -251,43 +261,75 @@ export default function HomePage() {
       setLoading(true);
       setError("");
       setUploadProgress(t("analyzing"));
-      
-      // Client-side extraction: extract text from PPTX without uploading the file
+
+      // Step 1: Client-side extraction
+      console.log('🔍 [UPLOAD-FLOW] Step 1/3: Starting client-side extraction...');
       const extracted = await extractPPTXText(selectedFile);
-      
-      setUploadProgress(t("extracting"));
-      
-      // Send extracted text as JSON to backend (no file upload!)
+      console.log('✅ [UPLOAD-FLOW] Extraction complete:', {
+        contentLength: extracted.text.length,
+        slideCount: extracted.slides.length,
+      });
+
+      // Validate extraction produced content
+      if (!extracted.text.trim()) {
+        console.error('❌ [UPLOAD-FLOW] Extraction produced empty content');
+        throw new Error('No text could be extracted from this PPTX. It may contain only images or videos.');
+      }
+
+      // Step 2: Prepare payload
+      console.log('🔍 [UPLOAD-FLOW] Step 2/3: Preparing JSON payload...');
+      const payload = {
+        title: extracted.metadata.title || selectedFile.name.replace('.pptx', ''),
+        subject: extracted.metadata.subject,
+        level: extracted.metadata.level,
+        period: extracted.metadata.period,
+        week: extracted.metadata.week,
+        session: extracted.metadata.session,
+        content: extracted.text,
+      };
+
+      console.log('📦 [UPLOAD-FLOW] Payload size:', {
+        jsonLength: JSON.stringify(payload).length,
+        estimatedKB: (JSON.stringify(payload).length / 1024).toFixed(2),
+      });
+
+      // Step 3: Upload JSON (NOT file!) - token will be read from cookies
+      console.log('🔍 [UPLOAD-FLOW] Step 3/3: Sending JSON to /api/lessons/upload-json/...');
+
       const result = await uploadLessonJson(
         extracted,
-        accessToken,
+        undefined, // Token is read from cookies
         API_URL
       );
-      
+
+      console.log('🎉 [UPLOAD-FLOW] Upload success:', result);
+      console.log('🚀 [UPLOAD-FLOW] === Upload Complete ===');
+
       // Store uploaded lesson details
       setUploadedLesson({
         id: result.lesson_id,
-        title: result.title,
-        subject: result.subject,
+        title: result.title || extracted.metadata.title || "Untitled",
+        subject: result.subject || extracted.metadata.subject || "français",
         level: extracted.metadata.level,
         period: extracted.metadata.period,
         week: extracted.metadata.week,
         session: extracted.metadata.session,
       });
-      
+
       // Refresh lessons list so the new one is available
       refreshLessons();
-      
+
       // Clear file input
       setSelectedFile(null);
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
       }
-      
+
       // Show success message but don't generate PDF yet
       setUploadProgress("");
-      
+
     } catch (err) {
+      console.error('❌ [UPLOAD-FLOW] Upload failed:', err);
       setError(err instanceof Error ? err.message : "Upload failed");
       setUploadProgress("");
     } finally {
@@ -295,39 +337,6 @@ export default function HomePage() {
     }
   };
   
-  // Upload lesson JSON to backend
-  async function uploadLessonJson(
-    extracted: ReturnType<typeof extractPPTXText> extends Promise<infer T> ? T : never,
-    accessToken: string,
-    apiUrl: string
-  ) {
-    const payload = {
-      title: extracted.metadata.title,
-      subject: extracted.metadata.subject,
-      level: extracted.metadata.level,
-      period: extracted.metadata.period,
-      week: extracted.metadata.week,
-      session: extracted.metadata.session,
-      content: extracted.text,
-    };
-
-    const response = await fetch(`${apiUrl}/lessons/upload-json/`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
-      },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({}));
-      throw new Error(error.error || 'Failed to upload lesson');
-    }
-
-    return response.json();
-  }
-
   // Generate PDF for uploaded lesson
   const handleGenerateUploaded = async () => {
     if (!uploadedLesson) return;

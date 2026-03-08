@@ -28,6 +28,7 @@ export interface ExtractedPPTX {
     week: string;
     session: string;
   };
+  warnings?: string[];
 }
 
 /**
@@ -50,15 +51,28 @@ export function isValidPPTX(file: File): boolean {
  * @returns Promise with extracted text and metadata
  */
 export async function extractPPTXText(file: File): Promise<ExtractedPPTX> {
+  // Comprehensive logging
+  console.log('🔍 [PPTX-EXTRACT] Starting extraction:', {
+    filename: file.name,
+    sizeBytes: file.size,
+    sizeMB: (file.size / 1024 / 1024).toFixed(2),
+    type: file.type,
+    timestamp: new Date().toISOString(),
+  });
+
   if (!isValidPPTX(file)) {
+    console.error('❌ [PPTX-EXTRACT] Invalid file type:', file.type);
     throw new Error('Invalid file type. Please select a .pptx file.');
   }
 
   try {
-    // Load the PPTX as a ZIP archive
+    // Step 1: Load ZIP
+    console.log('🔍 [PPTX-EXTRACT] Step 1/4: Loading PPTX as ZIP...');
     const zip = await JSZip.loadAsync(file);
+    console.log('✅ [PPTX-EXTRACT] ZIP loaded successfully');
     
     // Find all slide XML files (ppt/slides/slide*.xml)
+    console.log('🔍 [PPTX-EXTRACT] Step 2/4: Finding slide XML files...');
     const slideFiles = Object.keys(zip.files)
       .filter(name => name.match(/^ppt\/slides\/slide\d+\.xml$/))
       .sort((a, b) => {
@@ -68,17 +82,24 @@ export async function extractPPTXText(file: File): Promise<ExtractedPPTX> {
         return numA - numB;
       });
 
+    console.log('✅ [PPTX-EXTRACT] Found slide files:', slideFiles.length);
+
     if (slideFiles.length === 0) {
+      console.error('❌ [PPTX-EXTRACT] No slides found in PPTX file');
       throw new Error('No slides found in PPTX file');
     }
 
     // Extract text from each slide
+    console.log('🔍 [PPTX-EXTRACT] Step 3/4: Extracting text from slides...');
     const slides: string[] = [];
     
     for (const slidePath of slideFiles) {
+      const slideIndex = slides.length + 1;
+      console.log(`🔍 [PPTX-EXTRACT] Processing slide ${slideIndex}/${slideFiles.length}: ${slidePath}`);
       const slideXml = await zip.file(slidePath)?.async('string');
       if (slideXml) {
         const slideText = extractTextFromXML(slideXml);
+        console.log(`✅ [PPTX-EXTRACT] Slide ${slideIndex} extracted: ${slideText.length} chars`);
         slides.push(slideText);
       }
     }
@@ -86,14 +107,26 @@ export async function extractPPTXText(file: File): Promise<ExtractedPPTX> {
     const fullText = slides.join('\n\n');
 
     // Extract metadata from filename
+    console.log('🔍 [PPTX-EXTRACT] Step 4/4: Building result object...');
     const metadata = extractMetadataFromFilename(file.name);
 
-    return {
+    const result: ExtractedPPTX = {
       text: fullText,
       slides,
       metadata,
+      warnings: [],
     };
+
+    console.log('✅ [PPTX-EXTRACT] Extraction complete:', {
+      totalSlides: slides.length,
+      totalChars: fullText.length,
+      estimatedPayloadKB: (JSON.stringify(result).length / 1024).toFixed(2),
+      metadata,
+    });
+
+    return result;
   } catch (error) {
+    console.error('❌ [PPTX-EXTRACT] Extraction failed:', error);
     if (error instanceof Error) {
       throw new Error(`Failed to extract PPTX: ${error.message}`);
     }
@@ -106,12 +139,17 @@ export async function extractPPTXText(file: File): Promise<ExtractedPPTX> {
  * Text in PPTX is stored in <a:t> (anchor text) tags
  */
 function extractTextFromXML(xml: string): string {
+  console.log('🔍 [XML-PARSE] Parsing XML, length:', xml.length);
+  
   // Match all <a:t>...</a:t> tags and extract content
   const textMatches = xml.match(/<a:t[^>]*>([^<]*)<\/a:t>/g);
   
   if (!textMatches) {
+    console.log('⚠️ [XML-PARSE] No <a:t> tags found in XML');
     return '';
   }
+
+  console.log('🔍 [XML-PARSE] Found <a:t> tags:', textMatches.length);
 
   // Extract text content and clean up
   const texts = textMatches
@@ -122,7 +160,10 @@ function extractTextFromXML(xml: string): string {
     })
     .filter(text => text.length > 0);
 
-  return texts.join(' ');
+  const result = texts.join(' ');
+  console.log('✅ [XML-PARSE] Extracted text length:', result.length);
+  
+  return result;
 }
 
 /**
@@ -211,15 +252,27 @@ function extractMetadataFromFilename(filename: string): ExtractedPPTX['metadata'
  * Upload extracted lesson data to backend
  * Sends JSON payload instead of file upload
  */
+import Cookies from 'js-cookie';
+
 export async function uploadLessonJson(
   extractedData: ExtractedPPTX,
-  accessToken: string,
+  accessToken?: string,
   apiUrl: string = 'http://localhost:8000/api'
 ): Promise<{
   lesson_id: number;
   created: boolean;
   message: string;
+  title?: string;
+  subject?: string;
 }> {
+  // Get token from parameter or from cookies
+  const token = accessToken || Cookies.get('access_token');
+  
+  if (!token) {
+    console.error('❌ [API] No authentication token found');
+    throw new Error('Not authenticated. Please login first.');
+  }
+
   const payload = {
     title: extractedData.metadata.title,
     subject: extractedData.metadata.subject,
@@ -230,21 +283,48 @@ export async function uploadLessonJson(
     content: extractedData.text,
   };
 
-  const response = await fetch(`${apiUrl}/lessons/upload-json/`, {
+  const endpoint = `${apiUrl}/lessons/upload-json/`;
+  const payloadSize = JSON.stringify(payload).length;
+
+  console.log('📡 [API] POST request:', {
+    endpoint,
+    method: 'POST',
+    payloadSize,
+    payloadSizeKB: (payloadSize / 1024).toFixed(2),
+  });
+
+  const startTime = performance.now();
+
+  const response = await fetch(endpoint, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
+      'Authorization': `Bearer ${token}`,
     },
     body: JSON.stringify(payload),
   });
 
+  const duration = performance.now() - startTime;
+  console.log('📡 [API] Response received:', {
+    status: response.status,
+    statusText: response.statusText,
+    duration: `${duration.toFixed(0)}ms`,
+    contentType: response.headers.get('content-type'),
+  });
+
   if (!response.ok) {
-    const error = await response.json().catch(() => ({}));
-    throw new Error(error.error || 'Failed to upload lesson');
+    const errorBody = await response.json().catch(() => ({}));
+    console.error('❌ [API] Request failed:', {
+      status: response.status,
+      error: errorBody,
+    });
+    throw new Error(errorBody.error || `HTTP ${response.status}: ${response.statusText}`);
   }
 
-  return response.json();
+  const data = await response.json();
+  console.log('✅ [API] Response data:', data);
+
+  return data;
 }
 
 /**
