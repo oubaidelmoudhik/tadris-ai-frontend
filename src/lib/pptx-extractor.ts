@@ -297,6 +297,7 @@ export async function uploadLessonJson(
 
   const response = await fetch(endpoint, {
     method: 'POST',
+    credentials: 'include',  // Important: include cookies for authentication
     headers: {
       'Content-Type': 'application/json',
       'Authorization': `Bearer ${token}`,
