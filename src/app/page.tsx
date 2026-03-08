@@ -1,9 +1,14 @@
 "use client";
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import Cookies from 'js-cookie';
+import Cookies from "js-cookie";
 import { API_URL, uploadLesson } from "../lib/api";
-import { extractPPTXText, createPPTXHandler, isValidPPTX, uploadLessonJson } from "../lib/pptx-extractor";
+import {
+  extractPPTXText,
+  createPPTXHandler,
+  isValidPPTX,
+  uploadLessonJson,
+} from "../lib/pptx-extractor";
 import { translations } from "../lib/translations";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
@@ -41,7 +46,7 @@ export default function HomePage() {
   const [loading, setLoading] = useState(false);
   const [loadingStep, setLoadingStep] = useState<string>("");
   const [error, setError] = useState<string>("");
-  
+
   // Upload state
   const [showUpload, setShowUpload] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
@@ -67,22 +72,18 @@ export default function HomePage() {
   // Fetch available lessons (only when authenticated)
   useEffect(() => {
     if (!isAuthenticated) return;
-    
-    console.log("🔄 Fetching lessons from backend...");
-    fetch(`${API_URL}/lessons/`, { 
+
+    fetch(`${API_URL}/lessons/`, {
       credentials: "include",
       headers: getAuthHeaders(),
     })
       .then((res) => {
-        console.log("📡 Response status:", res.status);
         if (!res.ok) {
           throw new Error(`HTTP error! status: ${res.status}`);
         }
         return res.json();
       })
       .then((data) => {
-        console.log("✅ Lessons received:", data);
-        console.log("📊 Number of lessons:", data.length);
         setLessons(data);
         setError("");
       })
@@ -96,7 +97,9 @@ export default function HomePage() {
   if (authLoading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-purple-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 flex items-center justify-center">
-        <div className="p-10 text-center text-gray-700 dark:text-gray-300">{t("loading")}</div>
+        <div className="p-10 text-center text-gray-700 dark:text-gray-300">
+          {t("loading")}
+        </div>
       </div>
     );
   }
@@ -108,8 +111,7 @@ export default function HomePage() {
 
   // Get unique values for dropdowns
   const matieres = Array.from(new Set(lessons.map((l) => l.subject))).sort();
-  console.log("📚 Available subjects:", matieres);
-  
+
   // Get unique levels for selected subject
   const niveaux = selectedMatiere
     ? Array.from(
@@ -120,24 +122,33 @@ export default function HomePage() {
         )
       ).sort()
     : [];
-  
+
   // Filter by selected matiere and niveau to get periods
-  const periods = selectedMatiere && selectedNiveau
-    ? Array.from(
-        new Set(
-          lessons
-            .filter((l) => l.subject === selectedMatiere && l.level === selectedNiveau)
-            .map((l) => l.period)
-        )
-      ).sort()
-    : [];
-  
+  const periods =
+    selectedMatiere && selectedNiveau
+      ? Array.from(
+          new Set(
+            lessons
+              .filter(
+                (l) =>
+                  l.subject === selectedMatiere && l.level === selectedNiveau
+              )
+              .map((l) => l.period)
+          )
+        ).sort()
+      : [];
+
   // Filter by selected period to get weeks
   const weeks = selectedPeriod
     ? Array.from(
         new Set(
           lessons
-            .filter((l) => l.period === selectedPeriod && l.level === selectedNiveau && l.subject === selectedMatiere)
+            .filter(
+              (l) =>
+                l.period === selectedPeriod &&
+                l.level === selectedNiveau &&
+                l.subject === selectedMatiere
+            )
             .map((l) => l.week)
         )
       ).sort()
@@ -150,7 +161,11 @@ export default function HomePage() {
           new Set(
             lessons
               .filter(
-                (l) => l.period === selectedPeriod && l.week === selectedSemaine && l.level === selectedNiveau && l.subject === selectedMatiere
+                (l) =>
+                  l.period === selectedPeriod &&
+                  l.week === selectedSemaine &&
+                  l.level === selectedNiveau &&
+                  l.subject === selectedMatiere
               )
               .map((l) => l.session)
           )
@@ -177,29 +192,27 @@ export default function HomePage() {
       setLoading(true);
       setError("");
       setLoadingStep(t("analyzing"));
-      console.log("🚀 Generating PDF for lesson:", selectedLesson);
-      
+
       const res = await fetch(
         `${API_URL}/lessons/${selectedLesson.id}/generate/`,
-        { 
+        {
           method: "POST",
           credentials: "include",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             ...getAuthHeaders(),
           },
         }
       );
-      
+
       setLoadingStep(t("generatingPDF"));
-      
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
       }
-      
+
       const data = await res.json();
-      console.log("✅ PDF generated:", data);
       setResult(data);
     } finally {
       setLoading(false);
@@ -216,7 +229,7 @@ export default function HomePage() {
 
   // Refresh lessons list
   const refreshLessons = () => {
-    fetch(`${API_URL}/lessons/`, { 
+    fetch(`${API_URL}/lessons/`, {
       credentials: "include",
       headers: getAuthHeaders(),
     })
@@ -244,29 +257,19 @@ export default function HomePage() {
 
   // Handle upload - save to database only (using client-side extraction)
   const handleUpload = async () => {
-    console.log('🚀 [UPLOAD-FLOW] === Upload Initiated ===');
-    console.log('🔍 [UPLOAD-FLOW] Selected file:', {
-      name: selectedFile?.name,
-      size: selectedFile?.size,
-      sizeMB: selectedFile ? (selectedFile.size / 1024 / 1024).toFixed(2) : 'N/A',
-    });
-
     if (!selectedFile) {
-      console.error('❌ [UPLOAD-FLOW] No file selected');
       setError("Please select a file first");
       return;
     }
 
     // Validate file type
     if (!isValidPPTX(selectedFile)) {
-      console.error('❌ [UPLOAD-FLOW] Invalid file type');
       setError("Please select a .pptx file");
       return;
     }
 
     // Check if user is authenticated
     if (!isAuthenticated) {
-      console.error('❌ [UPLOAD-FLOW] Not authenticated');
       setError("Please login to upload lessons");
       return;
     }
@@ -277,23 +280,20 @@ export default function HomePage() {
       setUploadProgress(t("analyzing"));
 
       // Step 1: Client-side extraction
-      console.log('🔍 [UPLOAD-FLOW] Step 1/3: Starting client-side extraction...');
       const extracted = await extractPPTXText(selectedFile);
-      console.log('✅ [UPLOAD-FLOW] Extraction complete:', {
-        contentLength: extracted.text.length,
-        slideCount: extracted.slides.length,
-      });
 
       // Validate extraction produced content
       if (!extracted.text.trim()) {
-        console.error('❌ [UPLOAD-FLOW] Extraction produced empty content');
-        throw new Error('No text could be extracted from this PPTX. It may contain only images or videos.');
+        console.error("❌ [UPLOAD-FLOW] Extraction produced empty content");
+        throw new Error(
+          "No text could be extracted from this PPTX. It may contain only images or videos."
+        );
       }
 
       // Step 2: Prepare payload
-      console.log('🔍 [UPLOAD-FLOW] Step 2/3: Preparing JSON payload...');
       const payload = {
-        title: extracted.metadata.title || selectedFile.name.replace('.pptx', ''),
+        title:
+          extracted.metadata.title || selectedFile.name.replace(".pptx", ""),
         subject: extracted.metadata.subject,
         level: extracted.metadata.level,
         period: extracted.metadata.period,
@@ -302,22 +302,13 @@ export default function HomePage() {
         content: extracted.text,
       };
 
-      console.log('📦 [UPLOAD-FLOW] Payload size:', {
-        jsonLength: JSON.stringify(payload).length,
-        estimatedKB: (JSON.stringify(payload).length / 1024).toFixed(2),
-      });
-
       // Step 3: Upload JSON (NOT file!) - token will be read from cookies
-      console.log('🔍 [UPLOAD-FLOW] Step 3/3: Sending JSON to /api/lessons/upload-json/...');
 
       const result = await uploadLessonJson(
         extracted,
         undefined, // Token is read from cookies
         API_URL
       );
-
-      console.log('🎉 [UPLOAD-FLOW] Upload success:', result);
-      console.log('🚀 [UPLOAD-FLOW] === Upload Complete ===');
 
       // Store uploaded lesson details
       setUploadedLesson({
@@ -341,16 +332,15 @@ export default function HomePage() {
 
       // Show success message but don't generate PDF yet
       setUploadProgress("");
-
     } catch (err) {
-      console.error('❌ [UPLOAD-FLOW] Upload failed:', err);
+      console.error("❌ [UPLOAD-FLOW] Upload failed:", err);
       setError(err instanceof Error ? err.message : "Upload failed");
       setUploadProgress("");
     } finally {
       setLoading(false);
     }
   };
-  
+
   // Generate PDF for uploaded lesson
   const handleGenerateUploaded = async () => {
     if (!uploadedLesson) return;
@@ -359,29 +349,28 @@ export default function HomePage() {
       setLoading(true);
       setError("");
       setLoadingStep(t("analyzing"));
-      
+
       const res = await fetch(
         `${API_URL}/lessons/${uploadedLesson.id}/generate/`,
-        { 
+        {
           method: "POST",
           credentials: "include",
           headers: {
-            'Content-Type': 'application/json',
+            "Content-Type": "application/json",
             ...getAuthHeaders(),
           },
         }
       );
-      
+
       setLoadingStep(t("generatingPDF"));
-      
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}));
         throw new Error(errorData.error || `HTTP error! status: ${res.status}`);
       }
-      
+
       const data = await res.json();
       setResult(data);
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
@@ -406,9 +395,9 @@ export default function HomePage() {
 
   // Helper to get auth headers
   const getAuthHeaders = (): Record<string, string> => {
-    const token = Cookies.get('access_token');
+    const token = Cookies.get("access_token");
     if (token) {
-      return { 'Authorization': `Bearer ${token}` };
+      return { Authorization: `Bearer ${token}` };
     }
     return {};
   };
@@ -419,13 +408,27 @@ export default function HomePage() {
         {/* Error Banner */}
         {error && (
           <div className="mb-6 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-xl p-4 flex items-start gap-3">
-            <svg className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clipRule="evenodd" />
+            <svg
+              className="w-5 h-5 text-red-600 dark:text-red-400 mt-0.5 flex-shrink-0"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                clipRule="evenodd"
+              />
             </svg>
             <div>
-              <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">{t("connectionError")}</h3>
-              <p className="text-sm text-red-700 dark:text-red-400 mt-1">{error}</p>
-              <p className="text-xs text-red-600 dark:text-red-500 mt-2">{t("backendNotRunning")}</p>
+              <h3 className="text-sm font-semibold text-red-800 dark:text-red-300">
+                {t("connectionError")}
+              </h3>
+              <p className="text-sm text-red-700 dark:text-red-400 mt-1">
+                {error}
+              </p>
+              <p className="text-xs text-red-600 dark:text-red-500 mt-2">
+                {t("backendNotRunning")}
+              </p>
             </div>
           </div>
         )}
@@ -433,8 +436,16 @@ export default function HomePage() {
         {/* Debug Info */}
         {lessons.length > 0 && (
           <div className="mb-6 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-xl p-4 flex items-center gap-3">
-            <svg className="w-5 h-5 text-green-600 dark:text-green-400" fill="currentColor" viewBox="0 0 20 20">
-              <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+            <svg
+              className="w-5 h-5 text-green-600 dark:text-green-400"
+              fill="currentColor"
+              viewBox="0 0 20 20"
+            >
+              <path
+                fillRule="evenodd"
+                d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+                clipRule="evenodd"
+              />
             </svg>
             <p className="text-sm font-medium text-green-800 dark:text-green-300">
               {lessons.length} {t("lessonsLoaded")}
@@ -447,8 +458,18 @@ export default function HomePage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  />
                 </svg>
                 {t("selectLesson")}
               </h2>
@@ -580,16 +601,41 @@ export default function HomePage() {
               >
                 {loading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <svg
+                      className="animate-spin h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                     <span>{loadingStep || t("generating")}</span>
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                     <span>{t("generatePDF")}</span>
                   </>
@@ -602,8 +648,18 @@ export default function HomePage() {
           <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 overflow-hidden">
             <div className="bg-gradient-to-r from-green-600 to-teal-600 px-6 py-5">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                  />
                 </svg>
                 {t("result")}
               </h2>
@@ -614,13 +670,27 @@ export default function HomePage() {
                 <div className="bg-red-50 dark:bg-red-900/20 border-2 border-red-200 dark:border-red-800 rounded-xl p-5">
                   <div className="flex items-center gap-3 mb-3">
                     <div className="w-10 h-10 bg-red-500 rounded-full flex items-center justify-center">
-                      <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                      <svg
+                        className="w-6 h-6 text-white"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M6 18L18 6M6 6l12 12"
+                        />
                       </svg>
                     </div>
                     <div>
-                      <h3 className="font-bold text-red-900 dark:text-red-300">{t("generationError")}</h3>
-                      <p className="text-sm text-red-700 dark:text-red-400">{error}</p>
+                      <h3 className="font-bold text-red-900 dark:text-red-300">
+                        {t("generationError")}
+                      </h3>
+                      <p className="text-sm text-red-700 dark:text-red-400">
+                        {error}
+                      </p>
                     </div>
                   </div>
                   <button
@@ -636,13 +706,27 @@ export default function HomePage() {
                   <div className="bg-green-50 dark:bg-green-900/20 border-2 border-green-200 dark:border-green-800 rounded-xl p-5">
                     <div className="flex items-center gap-3 mb-3">
                       <div className="w-10 h-10 bg-green-500 rounded-full flex items-center justify-center">
-                        <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        <svg
+                          className="w-6 h-6 text-white"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 13l4 4L19 7"
+                          />
                         </svg>
                       </div>
                       <div>
-                        <h3 className="font-bold text-green-900 dark:text-green-300">{t("pdfGeneratedSuccess")}</h3>
-                        <p className="text-sm text-green-700 dark:text-green-400">{result.title}</p>
+                        <h3 className="font-bold text-green-900 dark:text-green-300">
+                          {t("pdfGeneratedSuccess")}
+                        </h3>
+                        <p className="text-sm text-green-700 dark:text-green-400">
+                          {result.title}
+                        </p>
                       </div>
                     </div>
                   </div>
@@ -653,8 +737,18 @@ export default function HomePage() {
                       onClick={handleDownload}
                       className="w-full bg-gradient-to-r from-green-600 to-teal-600 hover:from-green-700 hover:to-teal-700 text-white font-semibold py-4 px-6 rounded-xl shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 flex items-center justify-center gap-2"
                     >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
                       </svg>
                       <span>{t("downloadPDF")}</span>
                     </button>
@@ -663,12 +757,26 @@ export default function HomePage() {
               ) : (
                 <div className="text-center py-16">
                   <div className="w-20 h-20 bg-gray-100 dark:bg-gray-700 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg
+                      className="w-10 h-10 text-gray-400"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                   </div>
-                  <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">{t("noPDFYet")}</h3>
-                  <p className="text-sm text-gray-500 dark:text-gray-400">{t("noPDFDescription")}</p>
+                  <h3 className="text-lg font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                    {t("noPDFYet")}
+                  </h3>
+                  <p className="text-sm text-gray-500 dark:text-gray-400">
+                    {t("noPDFDescription")}
+                  </p>
                 </div>
               )}
             </div>
@@ -685,8 +793,18 @@ export default function HomePage() {
                 : "bg-white dark:bg-gray-800 text-indigo-600 dark:text-indigo-400 border-2 border-indigo-600 dark:border-indigo-400 hover:bg-indigo-50 dark:hover:bg-indigo-900/20"
             }`}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+            <svg
+              className="w-5 h-5"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+              />
             </svg>
             {showUpload ? t("backToSelection") : t("uploadNewLesson")}
           </button>
@@ -697,8 +815,18 @@ export default function HomePage() {
           <div className="mb-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border-2 border-indigo-200 dark:border-indigo-800 overflow-hidden">
             <div className="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-5">
               <h2 className="text-xl font-bold text-white flex items-center gap-2">
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                <svg
+                  className="w-6 h-6"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"
+                  />
                 </svg>
                 {t("uploadPPTX")}
               </h2>
@@ -717,18 +845,34 @@ export default function HomePage() {
                   />
                   <label htmlFor="file-upload" className="cursor-pointer">
                     <div className="flex flex-col items-center">
-                      <svg className="w-12 h-12 text-gray-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                      <svg
+                        className="w-12 h-12 text-gray-400 mb-3"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M9 13h6m-3-3v6m5 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                        />
                       </svg>
                       {selectedFile ? (
                         <div className="text-indigo-600 dark:text-indigo-400 font-medium">
                           <p className="text-lg">{selectedFile.name}</p>
-                          <p className="text-sm text-gray-500 dark:text-gray-400">{(selectedFile.size / 1024).toFixed(1)} KB</p>
+                          <p className="text-sm text-gray-500 dark:text-gray-400">
+                            {(selectedFile.size / 1024).toFixed(1)} KB
+                          </p>
                         </div>
                       ) : (
                         <div>
-                          <p className="text-gray-600 dark:text-gray-300 font-medium">{t("clickToSelectFile")}</p>
-                          <p className="text-sm text-gray-400 mt-1">{t("onlyPPTXAllowed")}</p>
+                          <p className="text-gray-600 dark:text-gray-300 font-medium">
+                            {t("clickToSelectFile")}
+                          </p>
+                          <p className="text-sm text-gray-400 mt-1">
+                            {t("onlyPPTXAllowed")}
+                          </p>
                         </div>
                       )}
                     </div>
@@ -750,16 +894,41 @@ export default function HomePage() {
                 >
                   {loading ? (
                     <>
-                      <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                      <svg
+                        className="animate-spin h-5 w-5"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                        />
                       </svg>
                       <span>{uploadProgress || t("uploading")}</span>
                     </>
                   ) : (
                     <>
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                      <svg
+                        className="w-5 h-5"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          strokeWidth={2}
+                          d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                        />
                       </svg>
                       <span>{t("uploadAndGenerate")}</span>
                     </>
@@ -778,30 +947,58 @@ export default function HomePage() {
         {(selectedLesson || uploadedLesson) && (
           <div className="mt-8 bg-white dark:bg-gray-800 rounded-2xl shadow-xl border border-gray-100 dark:border-gray-700 p-6">
             <h3 className="text-lg font-bold text-gray-900 dark:text-white mb-4 flex items-center gap-2">
-              <svg className="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              <svg
+                className="w-5 h-5 text-indigo-600 dark:text-indigo-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                />
               </svg>
-              {uploadedLesson ? t("uploadedLessonDetails") : t("selectedLessonDetails")}
+              {uploadedLesson
+                ? t("uploadedLessonDetails")
+                : t("selectedLessonDetails")}
             </h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
               <div className="bg-indigo-50 dark:bg-indigo-900/20 rounded-xl p-4">
-                <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-1">{t("subject")}</p>
-                <p className="text-sm font-bold text-indigo-900 dark:text-indigo-300">{t(activeLesson?.subject || "") || activeLesson?.subject}</p>
+                <p className="text-xs font-semibold text-indigo-600 dark:text-indigo-400 uppercase tracking-wide mb-1">
+                  {t("subject")}
+                </p>
+                <p className="text-sm font-bold text-indigo-900 dark:text-indigo-300">
+                  {t(activeLesson?.subject || "") || activeLesson?.subject}
+                </p>
               </div>
               <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4">
-                <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-1">{t("level")}</p>
-                <p className="text-sm font-bold text-purple-900 dark:text-purple-300">{activeLesson?.level}</p>
+                <p className="text-xs font-semibold text-purple-600 dark:text-purple-400 uppercase tracking-wide mb-1">
+                  {t("level")}
+                </p>
+                <p className="text-sm font-bold text-purple-900 dark:text-purple-300">
+                  {activeLesson?.level}
+                </p>
               </div>
               <div className="bg-pink-50 dark:bg-pink-900/20 rounded-xl p-4">
-                <p className="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase tracking-wide mb-1">{t("week")}</p>
-                <p className="text-sm font-bold text-pink-900 dark:text-pink-300">{activeLesson?.week}</p>
+                <p className="text-xs font-semibold text-pink-600 dark:text-pink-400 uppercase tracking-wide mb-1">
+                  {t("week")}
+                </p>
+                <p className="text-sm font-bold text-pink-900 dark:text-pink-300">
+                  {activeLesson?.week}
+                </p>
               </div>
               <div className="bg-teal-50 dark:bg-teal-900/20 rounded-xl p-4">
-                <p className="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wide mb-1">{t("session")}</p>
-                <p className="text-sm font-bold text-teal-900 dark:text-teal-300">{activeLesson?.session}</p>
+                <p className="text-xs font-semibold text-teal-600 dark:text-teal-400 uppercase tracking-wide mb-1">
+                  {t("session")}
+                </p>
+                <p className="text-sm font-bold text-teal-900 dark:text-teal-300">
+                  {activeLesson?.session}
+                </p>
               </div>
             </div>
-            
+
             {/* Generate PDF Button for uploaded lessons */}
             {uploadedLesson && !result && (
               <button
@@ -811,16 +1008,41 @@ export default function HomePage() {
               >
                 {loading ? (
                   <>
-                    <svg className="animate-spin h-5 w-5" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                    <svg
+                      className="animate-spin h-5 w-5"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      />
                     </svg>
                     <span>{loadingStep || t("generating")}</span>
                   </>
                 ) : (
                   <>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                      />
                     </svg>
                     <span>{t("generatePDF")}</span>
                   </>
