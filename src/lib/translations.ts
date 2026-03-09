@@ -98,6 +98,12 @@ export const translations: Translations = {
     loginSuccess: "Connexion réussie !",
     registerSuccess: "Compte créé avec succès !",
     welcome: "Bienvenue",
+    // PDF Preferences
+    pdfPreferences: "Préférences PDF",
+    colorPalette: "Palette de couleurs",
+    fontSize: "Taille de police",
+    lineSpacing: "Interligne",
+    preferencesSaved: "Préférences enregistrées !",
   },
   ar: {
     appTitle: "Tadris AI",
@@ -183,5 +189,11 @@ export const translations: Translations = {
     loginSuccess: "تم تسجيل الدخول بنجاح!",
     registerSuccess: "تم إنشاء الحساب بنجاح!",
     welcome: "مرحبا",
+    // PDF Preferences
+    pdfPreferences: "تفضيلات PDF",
+    colorPalette: "لوحة الألوان",
+    fontSize: "حجم الخط",
+    lineSpacing: "تباعد الأسطر",
+    preferencesSaved: "تم حفظ التفضيلات!",
   },
 };

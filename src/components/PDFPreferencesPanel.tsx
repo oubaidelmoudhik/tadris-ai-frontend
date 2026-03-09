@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import Cookies from 'js-cookie';
 import { API_URL } from '@/lib/api';
+import { useLanguage } from '@/context/LanguageContext';
+import { translations } from '@/lib/translations';
 
 interface ColorPalette {
   id: string;
@@ -33,6 +35,8 @@ export function PDFPreferencesPanel() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const { language } = useLanguage();
+  const t = (key: string) => translations[language][key] || translations['fr'][key] || key;
 
   // Fetch current preferences
   useEffect(() => {
@@ -73,7 +77,7 @@ export function PDFPreferencesPanel() {
 
       if (response.ok) {
         setPreferences((prev) => (prev ? { ...prev, [key]: value } : null));
-        setMessage({ type: 'success', text: 'Preferences saved!' });
+        setMessage({ type: 'success', text: t('preferencesSaved') });
       } else {
         setMessage({ type: 'error', text: data.error || 'Failed to save' });
       }
@@ -86,7 +90,7 @@ export function PDFPreferencesPanel() {
   };
 
   if (loading) {
-    return <div className="p-4 text-center">Loading preferences...</div>;
+    return <div className="p-4 text-center">{t('loading')}</div>;
   }
 
   return (
@@ -94,7 +98,7 @@ export function PDFPreferencesPanel() {
       {/* Color Palette Selection */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          PDF Color Palette
+          {t('colorPalette')}
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {preferences?.available_palettes.map((palette) => (
@@ -158,7 +162,7 @@ export function PDFPreferencesPanel() {
       {/* Font Size Selection */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Font Size
+          {t('fontSize')}
         </h3>
         <div className="flex gap-3">
           {preferences?.available_fonts.map((font) => (
@@ -184,7 +188,7 @@ export function PDFPreferencesPanel() {
       {/* Line Height Selection */}
       <div>
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-          Line Spacing
+          {t('lineSpacing')}
         </h3>
         <div className="flex gap-3">
           {preferences?.available_line_heights.map((lh) => (

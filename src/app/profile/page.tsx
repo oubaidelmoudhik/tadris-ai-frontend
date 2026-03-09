@@ -302,7 +302,7 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
                     {language === "fr" ? "Paramètres" : "الإعدادات"}
                 </h3>
-                <label className="flex items-center justify-between cursor-pointer">
+                <label className="flex items-center justify-between cursor-pointer mb-6">
                     <span className="text-gray-700 dark:text-gray-300 font-medium">
                         {t("showMinistryLogo")}
                     </span>
@@ -316,14 +316,14 @@ export default function ProfilePage() {
                         <div className="w-11 h-6 bg-gray-300 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-600 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-500 peer-checked:bg-blue-600"></div>
                     </div>
                 </label>
-            </div>
 
-            {/* PDF Preferences Section */}
-            <div className="mt-8 p-6 bg-gray-50 dark:bg-gray-700/50 rounded-xl border border-gray-200 dark:border-gray-600">
-                <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-                    {language === "fr" ? "Préférences PDF" : "تفضيلات PDF"}
-                </h3>
-                <PDFPreferencesPanel />
+                {/* PDF Preferences - integrated under Paramètres */}
+                <div className="border-t border-gray-200 dark:border-gray-600 pt-4">
+                    <h4 className="text-md font-semibold text-gray-900 dark:text-white mb-4">
+                        {language === "fr" ? "Préférences PDF" : "تفضيلات PDF"}
+                    </h4>
+                    <PDFPreferencesPanel />
+                </div>
             </div>
 
             <div className="mt-8 flex justify-center">

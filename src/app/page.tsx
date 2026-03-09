@@ -12,7 +12,6 @@ import {
 import { translations } from "../lib/translations";
 import { useLanguage } from "../context/LanguageContext";
 import { useAuth } from "../context/AuthContext";
-import { PDFPreviewModal } from "@/components/PDFPreviewModal";
 
 interface Lesson {
   id: number;
@@ -62,12 +61,6 @@ export default function HomePage() {
     session: string;
   } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  // PDF Preview state
-  const [showPreview, setShowPreview] = useState(false);
-  const [previewBase64, setPreviewBase64] = useState<string | null>(null);
-  const [isPreviewGenerating, setIsPreviewGenerating] = useState(false);
-  const [pendingPdfPath, setPendingPdfPath] = useState<string | null>(null);
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -199,7 +192,6 @@ export default function HomePage() {
       setLoading(true);
       setError("");
       setLoadingStep(t("analyzing"));
-      setIsPreviewGenerating(true);
 
       const res = await fetch(
         `${API_URL}/lessons/${selectedLesson.id}/generate/`,
@@ -210,7 +202,6 @@ export default function HomePage() {
             "Content-Type": "application/json",
             ...getAuthHeaders(),
           },
-          body: JSON.stringify({ with_preview: true }),
         }
       );
 
@@ -222,41 +213,21 @@ export default function HomePage() {
       }
 
       const data = await res.json();
-      
-      // Show preview modal instead of direct download
-      setPreviewBase64(data.preview_base64 || null);
-      setPendingPdfPath(data.pdf_path);
-      setShowPreview(true);
       setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
       setLoading(false);
       setLoadingStep("");
-      setIsPreviewGenerating(false);
     }
   };
 
-  // Handle regenerate from preview modal
-  const handleRegenerate = () => {
-    if (selectedLesson) {
-      handleGenerate();
-    } else if (uploadedLesson) {
-      handleGenerateUploaded();
-    }
-  };
-
-  // Handle download - works with either preview modal path or direct result path
+  // Handle download
   const handleDownload = () => {
-    const pdfPath = pendingPdfPath || result?.pdf_path;
-    if (!pdfPath) return;
-    const filename = pdfPath.split("/").pop();
+    if (!result?.pdf_path) return;
+    const filename = result.pdf_path.split("/").pop();
     if (!filename) return;
     window.open(`${API_URL}/lessons/pdf/${filename}/`, "_blank");
-    // Close preview modal after download
-    setShowPreview(false);
-    setPreviewBase64(null);
-    setPendingPdfPath(null);
   };
 
   // Refresh lessons list
@@ -381,7 +352,6 @@ export default function HomePage() {
       setLoading(true);
       setError("");
       setLoadingStep(t("analyzing"));
-      setIsPreviewGenerating(true);
 
       const res = await fetch(
         `${API_URL}/lessons/${uploadedLesson.id}/generate/`,
@@ -392,7 +362,6 @@ export default function HomePage() {
             "Content-Type": "application/json",
             ...getAuthHeaders(),
           },
-          body: JSON.stringify({ with_preview: true }),
         }
       );
 
@@ -404,18 +373,12 @@ export default function HomePage() {
       }
 
       const data = await res.json();
-      
-      // Show preview modal instead of direct download
-      setPreviewBase64(data.preview_base64 || null);
-      setPendingPdfPath(data.pdf_path);
-      setShowPreview(true);
       setResult(data);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Generation failed");
     } finally {
       setLoading(false);
       setLoadingStep("");
-      setIsPreviewGenerating(false);
     }
   };
 
@@ -1092,20 +1055,6 @@ export default function HomePage() {
           </div>
         )}
       </main>
-
-      {/* PDF Preview Modal */}
-      <PDFPreviewModal
-        isOpen={showPreview}
-        previewBase64={previewBase64}
-        onDownload={handleDownload}
-        onRegenerate={handleRegenerate}
-        onClose={() => {
-          setShowPreview(false);
-          setPreviewBase64(null);
-          setPendingPdfPath(null);
-        }}
-        isGenerating={isPreviewGenerating}
-      />
     </div>
   );
 }
