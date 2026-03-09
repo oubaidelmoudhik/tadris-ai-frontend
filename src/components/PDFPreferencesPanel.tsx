@@ -100,14 +100,14 @@ export function PDFPreferencesPanel() {
         <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-4">
           {t('colorPalette')}
         </h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {preferences?.available_palettes.map((palette) => (
             <button
               key={palette.id}
               onClick={() => updatePreference('color_preset', palette.id)}
               disabled={saving}
               className={`
-                relative p-4 rounded-xl border-2 transition-all
+                relative p-3 rounded-xl border-2 transition-all
                 ${preferences.color_preset === palette.id
                   ? 'border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20'
                   : 'border-gray-200 dark:border-gray-700 hover:border-gray-300'
@@ -117,42 +117,32 @@ export function PDFPreferencesPanel() {
             >
               {/* Selected indicator */}
               {preferences.color_preset === palette.id && (
-                <div className="absolute top-2 right-2 w-6 h-6 bg-indigo-600 rounded-full flex items-center justify-center">
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <div className="absolute top-1 right-1 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
+                  <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
               )}
               
               {/* Palette name */}
-              <p className="font-medium text-gray-900 dark:text-white mb-3">
-                {palette.name}
+              <p className="font-medium text-gray-900 dark:text-white mb-2 text-sm">
+                {t(palette.id) || palette.name}
               </p>
               
               {/* Color swatches */}
-              <div className="flex gap-1 h-8 rounded-lg overflow-hidden">
+              <div className="flex gap-0.5 h-6 rounded-md overflow-hidden">
                 <div
                   className="flex-1"
                   style={{ backgroundColor: palette.colors.primary }}
-                  title="Primary Color"
                 />
                 <div
                   className="flex-1"
                   style={{ backgroundColor: palette.colors.accent }}
-                  title="Accent Color"
                 />
                 <div
                   className="flex-1"
                   style={{ backgroundColor: palette.colors.text }}
-                  title="Text Color"
                 />
-              </div>
-              
-              {/* Labels */}
-              <div className="flex justify-between mt-1 text-xs text-gray-500">
-                <span>Main</span>
-                <span>Accent</span>
-                <span>Text</span>
               </div>
             </button>
           ))}
@@ -179,7 +169,7 @@ export function PDFPreferencesPanel() {
                 ${saving ? 'opacity-50 cursor-not-allowed' : ''}
               `}
             >
-              <span className="text-gray-900 dark:text-white">{font.name}</span>
+              <span className="text-gray-900 dark:text-white">{t(font.id) || font.name}</span>
             </button>
           ))}
         </div>
@@ -204,8 +194,8 @@ export function PDFPreferencesPanel() {
                 }
                 ${saving ? 'opacity-50 cursor-not-allowed' : ''}
               `}
-            >
-              <span className="text-gray-900 dark:text-white">{lh.name}</span>
+              >
+              <span className="text-gray-900 dark:text-white">{t(lh.id) || lh.name}</span>
             </button>
           ))}
         </div>

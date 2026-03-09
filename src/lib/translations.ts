@@ -104,6 +104,22 @@ export const translations: Translations = {
     fontSize: "Taille de police",
     lineSpacing: "Interligne",
     preferencesSaved: "Préférences enregistrées !",
+    // Palette names
+    professional: "Professionnel",
+    vibrant: "Vibrant",
+    calm: "Calme",
+    monotone: "Monotone",
+    // Color labels
+    main: "Principal",
+    accent: "Accent",
+    text: "Texte",
+    // Font sizes
+    small: "Petit",
+    medium: "Moyen",
+    large: "Grand",
+    // Line heights
+    compact: "Compact",
+    comfortable: "Confortable",
   },
   ar: {
     appTitle: "Tadris AI",
@@ -195,5 +211,21 @@ export const translations: Translations = {
     fontSize: "حجم الخط",
     lineSpacing: "تباعد الأسطر",
     preferencesSaved: "تم حفظ التفضيلات!",
+    // Palette names
+    professional: "احترافي",
+    vibrant: "نابض بالحياة",
+    calm: "هادئ",
+    monotone: "أحادي اللون",
+    // Color labels
+    main: "رئيسي",
+    accent: "تمييز",
+    text: "نص",
+    // Font sizes
+    small: "صغير",
+    medium: "متوسط",
+    large: "كبير",
+    // Line heights
+    compact: "مcompact",
+    comfortable: "مريح",
   },
 };
