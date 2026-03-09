@@ -52,6 +52,7 @@ export interface LessonResponse {
   title: string;
   lesson_data: Record<string, unknown>;
   pdf_path: string | null;
+  preview_base64?: string | null;
 }
 
 export interface UploadLessonResponse {
@@ -245,4 +246,25 @@ export async function downloadPDF(filename: string): Promise<void> {
   a.download = filename;
   a.click();
   window.URL.revokeObjectURL(url);
+}
+
+export async function generateLessonWithPreview(
+  lessonId: number,
+  accessToken: string
+): Promise<LessonResponse> {
+  const response = await fetch(`${API_URL}/lessons/${lessonId}/generate/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({ with_preview: true }),
+  });
+
+  if (!response.ok) {
+    const error = await response.json().catch(() => ({}));
+    throw new Error(error.error || "Generation failed");
+  }
+
+  return (await response.json()) as LessonResponse;
 }
