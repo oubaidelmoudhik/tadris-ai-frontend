@@ -9,11 +9,14 @@ import { translations } from '@/lib/translations';
 interface ColorPalette {
   id: string;
   name: string;
-  colors: {
-    primary: string;
-    accent: string;
-    text: string;
-  };
+  name_fr: string;
+  name_ar: string;
+  main: string;
+  accent: string;
+  text_light: string;
+  text_dark: string;
+  bg_light: string;
+  border: string;
 }
 
 interface PDFFormat {
@@ -125,24 +128,53 @@ export function PDFPreferencesPanel() {
               )}
               
               {/* Palette name */}
-              <p className="font-medium text-gray-900 dark:text-white mb-2 text-sm">
-                {t(palette.id) || palette.name}
+              <p className="font-medium text-gray-900 dark:text-white mb-2 text-sm text-center">
+                {language === 'ar' ? palette.name_ar : palette.name_fr}
               </p>
               
-              {/* Color swatches */}
-              <div className="flex gap-0.5 h-6 rounded-md overflow-hidden">
-                <div
-                  className="flex-1"
-                  style={{ backgroundColor: palette.colors.primary }}
+              {/* 3-COLOR SWATCH PREVIEW - Matches PDF exactly */}
+              <div className="space-y-1">
+                {/* Main color (headers/card backgrounds) */}
+                <div 
+                  className="h-6 rounded-md shadow-sm"
+                  style={{ backgroundColor: palette.main }}
+                  title={language === 'ar' ? 'اللون الرئيسي' : 'Couleur principale'}
                 />
-                <div
-                  className="flex-1"
-                  style={{ backgroundColor: palette.colors.accent }}
+                
+                {/* Accent color (highlights/icons) */}
+                <div 
+                  className="h-4 rounded-md shadow-sm"
+                  style={{ backgroundColor: palette.accent }}
+                  title={language === 'ar' ? 'لون التمييز' : 'Accent'}
                 />
-                <div
-                  className="flex-1"
-                  style={{ backgroundColor: palette.colors.text }}
-                />
+                
+                {/* Content card preview (bg_light with text_dark) */}
+                <div 
+                  className="h-8 rounded-md shadow-sm flex items-center justify-center text-xs font-medium"
+                  style={{ 
+                    backgroundColor: palette.bg_light, 
+                    color: palette.text_dark 
+                  }}
+                  title={language === 'ar' ? 'محتوى النص' : 'Contenu texte'}
+                >
+                  Aa
+                </div>
+              </div>
+              
+              {/* Color labels */}
+              <div className="mt-2 text-xs text-gray-500 dark:text-gray-400 space-y-0.5">
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: palette.main }} />
+                  <span>{language === 'ar' ? 'رئيسي' : 'Principal'}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: palette.accent }} />
+                  <span>{language === 'ar' ? 'تمييز' : 'Accent'}</span>
+                </div>
+                <div className="flex items-center gap-1.5">
+                  <div className="w-2 h-2 rounded-full" style={{ backgroundColor: palette.bg_light }} />
+                  <span>{language === 'ar' ? 'خلفية' : 'Fond'}</span>
+                </div>
               </div>
             </button>
           ))}
