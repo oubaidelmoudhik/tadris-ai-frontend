@@ -225,7 +225,7 @@ export const translations: Translations = {
     medium: "متوسط",
     large: "كبير",
     // Line heights
-    compact: "مcompact",
+    compact: "صغير",
     comfortable: "مريح",
   },
 };
