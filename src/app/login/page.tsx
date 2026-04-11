@@ -32,7 +32,8 @@ export default function LoginPage() {
 
     try {
       await login(formData);
-      router.push("/");
+      // Use window.location for a reliable redirect after login
+      window.location.href = "/";
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : t("loginError"));
     }

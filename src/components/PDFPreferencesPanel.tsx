@@ -56,10 +56,25 @@ export function PDFPreferencesPanel() {
       const response = await fetch(`${API_URL}/user/pdf-preferences/`, {
         headers: token ? { Authorization: `Bearer ${token}` } : {},
       });
+      
+      if (!response.ok) {
+        if (response.status === 401) {
+          // User not authenticated - show message instead of error
+          console.warn("User not authenticated for preferences");
+          setMessage({ type: "error", text: t("loginRequired") || "Please login to save preferences" });
+        } else {
+          console.error("Failed to fetch preferences:", response.status);
+          setMessage({ type: "error", text: t("preferencesLoadError") || "Failed to load preferences" });
+        }
+        setLoading(false);
+        return;
+      }
+      
       const data = await response.json();
       setPreferences(data);
     } catch (error) {
       console.error("Failed to fetch preferences:", error);
+      setMessage({ type: "error", text: t("preferencesLoadError") || "Failed to load preferences" });
     } finally {
       setLoading(false);
     }
@@ -100,6 +115,30 @@ export function PDFPreferencesPanel() {
     return <div className="p-4 text-center">{t("loading")}</div>;
   }
 
+  // Default palettes as fallback when API fails
+  const defaultPalettes: ColorPalette[] = [
+    { id: "professional", name: "Professionnel", name_fr: "Professionnel", name_ar: "مهني", main: "#1E40AF", accent: "#3B82F6", text_light: "#FFFFFF", text_dark: "#1F2937", bg_light: "#F9FAFB", border: "#DBEAFE" },
+    { id: "vibrant", name: "Vibrant", name_fr: "Vibrant", name_ar: "حيوي", main: "#7C2D12", accent: "#EA580C", text_light: "#FFFFFF", text_dark: "#1F2937", bg_light: "#FFFBEB", border: "#FED7AA" },
+    { id: "calm", name: "Calme", name_fr: "Calme", name_ar: "هادئ", main: "#065F46", accent: "#10B981", text_light: "#FFFFFF", text_dark: "#1F2937", bg_light: "#ECFDF5", border: "#A7F3D0" },
+    { id: "monotone", name: "Monotone", name_fr: "Monotone", name_ar: "أحادي اللون", main: "#374151", accent: "#6B7280", text_light: "#FFFFFF", text_dark: "#111827", bg_light: "#F3F4F6", border: "#D1D5DB" },
+  ];
+
+  const defaultFonts: PDFFormat[] = [
+    { id: "small", name: "Small (10px)" },
+    { id: "medium", name: "Medium (12px)" },
+    { id: "large", name: "Large (14px)" },
+  ];
+
+  const defaultLineHeights: PDFFormat[] = [
+    { id: "compact", name: "Compact (1.3)" },
+    { id: "comfortable", name: "Comfortable (1.6)" },
+  ];
+
+  // Use API data or defaults
+  const availablePalettes = preferences?.available_palettes || defaultPalettes;
+  const availableFonts = preferences?.available_fonts || defaultFonts;
+  const availableLineHeights = preferences?.available_line_heights || defaultLineHeights;
+
   return (
     <div className="space-y-6">
       {/* Color Palette Selection */}
@@ -108,7 +147,7 @@ export function PDFPreferencesPanel() {
           {t("colorPalette")}
         </h3>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {preferences?.available_palettes.map((palette) => (
+          {availablePalettes.map((palette) => (
             <button
               key={palette.id}
               onClick={() => updatePreference("color_preset", palette.id)}
@@ -116,7 +155,7 @@ export function PDFPreferencesPanel() {
               className={`
                 relative p-3 rounded-xl border-2 transition-all
                 ${
-                  preferences.color_preset === palette.id
+                  (preferences?.color_preset || 'professional') === palette.id
                     ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
                     : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                 }
@@ -124,7 +163,7 @@ export function PDFPreferencesPanel() {
               `}
             >
               {/* Selected indicator */}
-              {preferences.color_preset === palette.id && (
+              {(preferences?.color_preset || 'professional') === palette.id && (
                 <div className="absolute top-1 right-1 w-5 h-5 bg-indigo-600 rounded-full flex items-center justify-center">
                   <svg
                     className="w-3 h-3 text-white"
@@ -204,7 +243,7 @@ export function PDFPreferencesPanel() {
           {t("fontSize")}
         </h3>
         <div className="flex gap-3">
-          {preferences?.available_fonts.map((font) => (
+          {availableFonts.map((font) => (
             <button
               key={font.id}
               onClick={() => updatePreference("font_size", font.id)}
@@ -212,7 +251,7 @@ export function PDFPreferencesPanel() {
               className={`
                 flex-1 py-3 px-4 rounded-lg border-2 transition-all
                 ${
-                  preferences.font_size === font.id
+                  (preferences?.font_size || 'medium') === font.id
                     ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
                     : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                 }
@@ -233,7 +272,7 @@ export function PDFPreferencesPanel() {
           {t("lineSpacing")}
         </h3>
         <div className="flex gap-3">
-          {preferences?.available_line_heights.map((lh) => (
+          {availableLineHeights.map((lh) => (
             <button
               key={lh.id}
               onClick={() => updatePreference("line_height", lh.id)}
@@ -241,7 +280,7 @@ export function PDFPreferencesPanel() {
               className={`
                 flex-1 py-3 px-4 rounded-lg border-2 transition-all
                 ${
-                  preferences.line_height === lh.id
+                  (preferences?.line_height || 'comfortable') === lh.id
                     ? "border-indigo-600 bg-indigo-50 dark:bg-indigo-900/20"
                     : "border-gray-200 dark:border-gray-700 hover:border-gray-300"
                 }

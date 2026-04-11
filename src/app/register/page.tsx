@@ -41,7 +41,8 @@ export default function RegisterPage() {
 
     try {
       await register(formData);
-      router.push("/");
+      // Use window.location for a reliable redirect after registration
+      window.location.href = "/";
     } catch (err) {
       setLocalError(err instanceof Error ? err.message : t("registerError"));
     }
